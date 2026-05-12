@@ -155,25 +155,37 @@ class CreateOrderFragment : Fragment() {
                 else -> OrderStatus.RECEIVED
             }
 
-            val order = Order(
-                id = editingOrder?.id ?: 0,
-                clientId = if (selectedClientId > 0) selectedClientId else (editingOrder?.clientId ?: 0),
-                clientName = clientName,
-                clientPhone = clientPhone,
-                itemType = itemType,
-                serviceType = serviceType,
-                receivedDate = receivedDate,
-                dueDate = dueDate,
-                price = price,
-                status = status,
-                comment = comment,
-                createdAt = editingOrder?.createdAt ?: System.currentTimeMillis()
-            )
+            viewLifecycleOwner.lifecycleScope.launch {
+                val clientId = if (selectedClientId > 0) {
+                    selectedClientId
+                } else if (editingOrder != null && editingOrder!!.clientId > 0) {
+                    editingOrder!!.clientId
+                } else {
+                    clientRepository.insertClient(
+                        Client(fullName = clientName, phone = clientPhone)
+                    )
+                }
 
-            if (editingOrder != null) {
-                viewModel.updateOrder(order)
-            } else {
-                viewModel.saveOrder(order)
+                val order = Order(
+                    id = editingOrder?.id ?: 0,
+                    clientId = clientId,
+                    clientName = clientName,
+                    clientPhone = clientPhone,
+                    itemType = itemType,
+                    serviceType = serviceType,
+                    receivedDate = receivedDate,
+                    dueDate = dueDate,
+                    price = price,
+                    status = status,
+                    comment = comment,
+                    createdAt = editingOrder?.createdAt ?: System.currentTimeMillis()
+                )
+
+                if (editingOrder != null) {
+                    viewModel.updateOrder(order)
+                } else {
+                    viewModel.saveOrder(order)
+                }
             }
         }
     }
