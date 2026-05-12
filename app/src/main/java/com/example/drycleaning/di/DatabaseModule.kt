@@ -27,7 +27,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "drycleaning_db"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
