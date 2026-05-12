@@ -8,18 +8,17 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.drycleaning.util.Constants
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 
-/**
- * Менеджер сессии пользователя на основе DataStore.
- * Хранит информацию о текущем авторизованном пользователе.
- */
+/** Менеджер сессии пользователя на основе DataStore */
 @Singleton
 class SessionManager @Inject constructor(
     @ApplicationContext private val context: Context
@@ -31,6 +30,7 @@ class SessionManager @Inject constructor(
         private val KEY_FULL_NAME = stringPreferencesKey("full_name")
         private val KEY_ROLE = stringPreferencesKey("role")
         private val KEY_THEME = stringPreferencesKey("theme")
+        private val KEY_LAST_ACTIVITY = longPreferencesKey("last_activity")
     }
 
     val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -64,6 +64,7 @@ class SessionManager @Inject constructor(
             prefs[KEY_USERNAME] = username
             prefs[KEY_FULL_NAME] = fullName
             prefs[KEY_ROLE] = role
+            prefs[KEY_LAST_ACTIVITY] = System.currentTimeMillis()
         }
     }
 
@@ -74,6 +75,7 @@ class SessionManager @Inject constructor(
             prefs.remove(KEY_USERNAME)
             prefs.remove(KEY_FULL_NAME)
             prefs.remove(KEY_ROLE)
+            prefs.remove(KEY_LAST_ACTIVITY)
         }
     }
 
@@ -81,5 +83,19 @@ class SessionManager @Inject constructor(
         context.dataStore.edit { prefs ->
             prefs[KEY_THEME] = theme
         }
+    }
+
+    suspend fun updateLastActivity() {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LAST_ACTIVITY] = System.currentTimeMillis()
+        }
+    }
+
+    suspend fun isSessionExpired(): Boolean {
+        val prefs = context.dataStore.data.first()
+        val isLoggedIn = prefs[KEY_IS_LOGGED_IN] ?: false
+        if (!isLoggedIn) return false
+        val lastActivity = prefs[KEY_LAST_ACTIVITY] ?: return false
+        return System.currentTimeMillis() - lastActivity > Constants.SESSION_TIMEOUT_MS
     }
 }

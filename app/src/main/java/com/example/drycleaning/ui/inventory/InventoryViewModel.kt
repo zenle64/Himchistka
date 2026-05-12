@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.drycleaning.data.entity.InventoryItem
 import com.example.drycleaning.data.repository.InventoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,11 +18,25 @@ class InventoryViewModel @Inject constructor(
     private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
 
-    val allItems = inventoryRepository.getAllItems()
+    private val _searchQuery = MutableStateFlow("")
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allItems = _searchQuery.flatMapLatest { query ->
+        if (query.isBlank()) {
+            inventoryRepository.getAllItems()
+        } else {
+            inventoryRepository.searchItems(query)
+        }
+    }
+
     val lowStockItems = inventoryRepository.getLowStockItems()
 
     private val _saveResult = MutableStateFlow<Result<Long>?>(null)
     val saveResult: StateFlow<Result<Long>?> = _saveResult
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
 
     fun saveItem(item: InventoryItem) {
         viewModelScope.launch {

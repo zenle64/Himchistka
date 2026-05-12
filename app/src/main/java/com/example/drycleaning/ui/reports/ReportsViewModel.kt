@@ -7,7 +7,11 @@ import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.drycleaning.data.entity.Order
+import com.example.drycleaning.data.repository.ClientRepository
 import com.example.drycleaning.data.repository.OrderRepository
+import com.example.drycleaning.util.toDateString
+import com.example.drycleaning.util.toCurrencyString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +31,8 @@ import javax.inject.Inject
 /** ViewModel для отчётов и аналитики */
 @HiltViewModel
 class ReportsViewModel @Inject constructor(
-    private val orderRepository: OrderRepository
+    private val orderRepository: OrderRepository,
+    private val clientRepository: ClientRepository
 ) : ViewModel() {
 
     private val _startDate = MutableStateFlow(getDefaultStartDate())
@@ -41,22 +46,47 @@ class ReportsViewModel @Inject constructor(
 
     val popularServices = orderRepository.getPopularServices()
 
-    /** Выручка за выбранный период — реактивно обновляется при смене дат */
     @OptIn(ExperimentalCoroutinesApi::class)
     val revenueForPeriod = combine(_startDate, _endDate) { start, end -> start to end }
         .flatMapLatest { (start, end) -> orderRepository.getRevenueForPeriod(start, end) }
 
-    /** Количество заказов за выбранный период — реактивно обновляется при смене дат */
     @OptIn(ExperimentalCoroutinesApi::class)
     val orderCountForPeriod = combine(_startDate, _endDate) { start, end -> start to end }
         .flatMapLatest { (start, end) -> orderRepository.getOrderCountForPeriod(start, end) }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val averageCheck = combine(_startDate, _endDate) { start, end -> start to end }
+        .flatMapLatest { (start, end) -> orderRepository.getAverageCheckForPeriod(start, end) }
+
+    private val _dailyRevenueData = MutableStateFlow<List<Pair<String, Double>>>(emptyList())
+    val dailyRevenueData: StateFlow<List<Pair<String, Double>>> = _dailyRevenueData
+
+    init {
+        loadDailyRevenueData()
+    }
+
     fun setStartDate(date: Long) {
         _startDate.value = date
+        loadDailyRevenueData()
     }
 
     fun setEndDate(date: Long) {
         _endDate.value = date
+        loadDailyRevenueData()
+    }
+
+    private fun loadDailyRevenueData() {
+        viewModelScope.launch {
+            try {
+                val orders = orderRepository.getDeliveredOrdersForPeriod(_startDate.value, _endDate.value)
+                val sdf = SimpleDateFormat("dd.MM", Locale("ru"))
+                val grouped = orders.groupBy { sdf.format(Date(it.createdAt)) }
+                    .map { (date, orderList) -> date to orderList.sumOf { it.price } }
+                _dailyRevenueData.value = grouped
+            } catch (_: Exception) {
+                _dailyRevenueData.value = emptyList()
+            }
+        }
     }
 
     fun exportToPdf(context: Context) {
@@ -111,6 +141,59 @@ class ReportsViewModel @Inject constructor(
                 document.close()
 
                 _exportResult.value = file.absolutePath
+            } catch (e: Exception) {
+                _exportResult.value = "Ошибка: ${e.message}"
+            }
+        }
+    }
+
+    fun exportOrdersToCsv(context: Context) {
+        viewModelScope.launch {
+            try {
+                val orders = orderRepository.getDeliveredOrdersForPeriod(_startDate.value, _endDate.value)
+                val allOrders = orderRepository.getAllOrders().first()
+
+                val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "export")
+                dir.mkdirs()
+                val fileName = "orders_${System.currentTimeMillis()}.csv"
+                val file = File(dir, fileName)
+
+                file.bufferedWriter().use { writer ->
+                    writer.write("ID;Клиент;Телефон;Изделие;Услуга;Дата приёма;Дата выдачи;Цена;Статус;Комментарий")
+                    writer.newLine()
+                    for (order in allOrders) {
+                        writer.write("${order.id};${order.clientName};${order.clientPhone};${order.itemType};${order.serviceType};${order.receivedDate.toDateString()};${order.dueDate.toDateString()};${order.price};${order.status};${order.comment}")
+                        writer.newLine()
+                    }
+                }
+
+                _exportResult.value = "CSV сохранён: $fileName"
+            } catch (e: Exception) {
+                _exportResult.value = "Ошибка: ${e.message}"
+            }
+        }
+    }
+
+    fun exportClientsToCsv(context: Context) {
+        viewModelScope.launch {
+            try {
+                val clients = clientRepository.getAllClients().first()
+
+                val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "export")
+                dir.mkdirs()
+                val fileName = "clients_${System.currentTimeMillis()}.csv"
+                val file = File(dir, fileName)
+
+                file.bufferedWriter().use { writer ->
+                    writer.write("ID;ФИО;Телефон;Email;Адрес;Заметки;Дата регистрации")
+                    writer.newLine()
+                    for (client in clients) {
+                        writer.write("${client.id};${client.fullName};${client.phone};${client.email};${client.address};${client.notes};${client.createdAt.toDateString()}")
+                        writer.newLine()
+                    }
+                }
+
+                _exportResult.value = "CSV сохранён: $fileName"
             } catch (e: Exception) {
                 _exportResult.value = "Ошибка: ${e.message}"
             }

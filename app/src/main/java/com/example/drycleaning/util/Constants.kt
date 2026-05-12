@@ -19,4 +19,7 @@ object Constants {
     /** Канал уведомлений */
     const val NOTIFICATION_CHANNEL_ID = "drycleaning_notifications"
     const val NOTIFICATION_CHANNEL_NAME = "Уведомления химчистки"
+
+    /** Тайм-аут сессии при неактивности (15 минут в мс) */
+    const val SESSION_TIMEOUT_MS = 15 * 60 * 1000L
 }

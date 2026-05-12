@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.drycleaning.data.entity.Order
 import com.example.drycleaning.databinding.ItemOrderBinding
+import com.example.drycleaning.util.displayOrderNumber
 import com.example.drycleaning.util.toCurrencyString
 import com.example.drycleaning.util.toColorRes
 import com.example.drycleaning.util.toDateString
@@ -33,7 +34,7 @@ class OrderAdapter(
 
         fun bind(order: Order) {
             binding.apply {
-                tvOrderNumber.text = "Заказ #${order.id}"
+                tvOrderNumber.text = order.displayOrderNumber()
                 tvClientName.text = order.clientName
                 tvItemType.text = "${order.itemType} — ${order.serviceType}"
                 tvPrice.text = order.price.toCurrencyString()

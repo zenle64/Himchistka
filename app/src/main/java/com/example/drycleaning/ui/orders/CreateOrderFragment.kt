@@ -13,16 +13,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.example.drycleaning.data.entity.Client
 import com.example.drycleaning.data.entity.Order
 import com.example.drycleaning.data.entity.OrderStatus
+import com.example.drycleaning.data.repository.ClientRepository
 import com.example.drycleaning.databinding.FragmentCreateOrderBinding
 import com.example.drycleaning.util.Constants
 import com.example.drycleaning.util.toCurrencyString
 import com.example.drycleaning.util.toDateString
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 
 /** Фрагмент создания / редактирования заказа */
 @AndroidEntryPoint
@@ -33,9 +37,14 @@ class CreateOrderFragment : Fragment() {
     private val viewModel: OrdersViewModel by viewModels()
     private val args: CreateOrderFragmentArgs by navArgs()
 
+    @Inject
+    lateinit var clientRepository: ClientRepository
+
     private var receivedDate = System.currentTimeMillis()
-    private var dueDate = System.currentTimeMillis() + 3 * 24 * 60 * 60 * 1000L // +3 дня
+    private var dueDate = System.currentTimeMillis() + 3 * 24 * 60 * 60 * 1000L
     private var editingOrder: Order? = null
+    private var selectedClientId: Long = 0
+    private var clientsList = listOf<Client>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentCreateOrderBinding.inflate(inflater, container, false)
@@ -45,6 +54,7 @@ class CreateOrderFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupDropdowns()
+        setupClientPicker()
         setupDatePickers()
         setupAutoPrice()
         setupSaveButton()
@@ -70,6 +80,20 @@ class CreateOrderFragment : Fragment() {
         val statusAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, statusNames)
         binding.actvStatus.setAdapter(statusAdapter)
         binding.actvStatus.setText("Принят", false)
+    }
+
+    private fun setupClientPicker() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            clientsList = clientRepository.getAllClients().first()
+            val clientNames = clientsList.map { "${it.fullName} (${it.phone})" }
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, clientNames)
+            binding.etClientName.setAdapter(adapter)
+            binding.etClientName.setOnItemClickListener { _, _, position, _ ->
+                val client = clientsList[position]
+                selectedClientId = client.id
+                binding.etClientPhone.setText(client.phone)
+            }
+        }
     }
 
     private fun setupDatePickers() {
@@ -133,7 +157,7 @@ class CreateOrderFragment : Fragment() {
 
             val order = Order(
                 id = editingOrder?.id ?: 0,
-                clientId = editingOrder?.clientId ?: 0,
+                clientId = if (selectedClientId > 0) selectedClientId else (editingOrder?.clientId ?: 0),
                 clientName = clientName,
                 clientPhone = clientPhone,
                 itemType = itemType,
@@ -193,7 +217,8 @@ class CreateOrderFragment : Fragment() {
                 viewModel.getOrderById(orderId).collect { order ->
                     order?.let {
                         editingOrder = it
-                        binding.etClientName.setText(it.clientName)
+                        selectedClientId = it.clientId
+                        binding.etClientName.setText(it.clientName, false)
                         binding.etClientPhone.setText(it.clientPhone)
                         binding.actvItemType.setText(it.itemType, false)
                         binding.actvServiceType.setText(it.serviceType, false)

@@ -7,6 +7,7 @@ import com.example.drycleaning.data.repository.ClientRepository
 import com.example.drycleaning.data.repository.OrderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -70,6 +71,10 @@ class ClientsViewModel @Inject constructor(
     fun getClientByIdFlow(id: Long) = clientRepository.getClientByIdFlow(id)
 
     fun getClientOrders(clientId: Long) = orderRepository.getOrdersByClient(clientId)
+
+    fun getClientTotalSpent(clientId: Long): Flow<Double> = orderRepository.getClientTotalSpent(clientId)
+
+    fun getClientOrderCount(clientId: Long): Flow<Int> = orderRepository.getClientOrderCount(clientId)
 
     fun resetSaveResult() {
         _saveResult.value = null

@@ -1,6 +1,5 @@
 package com.example.drycleaning.ui.reports
 
-import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,11 +21,10 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.utils.ColorTemplate
-import com.google.android.material.color.MaterialColors
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
 /** Фрагмент отчётов и аналитики */
 @AndroidEntryPoint
@@ -44,31 +42,52 @@ class ReportsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupDatePickers()
-        setupExportButton()
+        setupCharts()
+        setupExportButtons()
         observeData()
     }
 
     private fun setupDatePickers() {
         binding.tvStartDate.setOnClickListener {
-            val cal = Calendar.getInstance()
-            DatePickerDialog(requireContext(), { _, y, m, d ->
-                val selected = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }
-                viewModel.setStartDate(selected.timeInMillis)
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+            showDatePicker("Начало") { viewModel.setStartDate(it) }
         }
-
         binding.tvEndDate.setOnClickListener {
-            val cal = Calendar.getInstance()
-            DatePickerDialog(requireContext(), { _, y, m, d ->
-                val selected = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59) }
-                viewModel.setEndDate(selected.timeInMillis)
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+            showDatePicker("Конец") { viewModel.setEndDate(it) }
         }
     }
 
-    private fun setupExportButton() {
+    private fun showDatePicker(title: String, onDateSelected: (Long) -> Unit) {
+        val picker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText(title)
+            .build()
+        picker.addOnPositiveButtonClickListener { onDateSelected(it) }
+        picker.show(parentFragmentManager, "datePicker")
+    }
+
+    private fun setupCharts() {
+        binding.pieChart.apply {
+            description.isEnabled = false
+            isDrawHoleEnabled = true
+            setHoleColor(android.graphics.Color.TRANSPARENT)
+            setEntryLabelTextSize(12f)
+        }
+        binding.barChart.apply {
+            description.isEnabled = false
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.granularity = 1f
+            axisRight.isEnabled = false
+        }
+    }
+
+    private fun setupExportButtons() {
         binding.btnExportPdf.setOnClickListener {
             viewModel.exportToPdf(requireContext())
+        }
+        binding.btnExportOrdersCsv.setOnClickListener {
+            viewModel.exportOrdersToCsv(requireContext())
+        }
+        binding.btnExportClientsCsv.setOnClickListener {
+            viewModel.exportClientsToCsv(requireContext())
         }
     }
 
@@ -76,30 +95,58 @@ class ReportsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.startDate.collect { date ->
-                        binding.tvStartDate.text = date.toDateString()
+                    viewModel.startDate.collect {
+                        binding.tvStartDate.text = it.toDateString()
                     }
                 }
                 launch {
-                    viewModel.endDate.collect { date ->
-                        binding.tvEndDate.text = date.toDateString()
+                    viewModel.endDate.collect {
+                        binding.tvEndDate.text = it.toDateString()
                     }
                 }
                 launch {
-                    viewModel.revenueForPeriod.collect { revenue ->
-                        binding.tvRevenue.text = revenue.toCurrencyString()
+                    viewModel.revenueForPeriod.collect {
+                        binding.tvRevenue.text = it.toCurrencyString()
                     }
                 }
                 launch {
-                    viewModel.orderCountForPeriod.collect { count ->
-                        binding.tvOrderCount.text = "Заказов: $count"
+                    viewModel.orderCountForPeriod.collect {
+                        binding.tvOrderCount.text = "Заказов: $it"
+                    }
+                }
+                launch {
+                    viewModel.averageCheck.collect {
+                        binding.tvAverageCheck.text = "Средний чек: ${it.toCurrencyString()}"
                     }
                 }
                 launch {
                     viewModel.popularServices.collect { services ->
-                        if (services.isNotEmpty()) {
-                            setupPieChart(services.map { it.serviceType to it.cnt })
-                            setupBarChart(services.map { it.serviceType to it.cnt })
+                        val entries = services.map { PieEntry(it.cnt.toFloat(), it.serviceType) }
+                        if (entries.isNotEmpty()) {
+                            val dataSet = PieDataSet(entries, "").apply {
+                                colors = ColorTemplate.MATERIAL_COLORS.toList()
+                                valueTextSize = 14f
+                            }
+                            binding.pieChart.data = PieData(dataSet)
+                            binding.pieChart.invalidate()
+                        }
+                    }
+                }
+                launch {
+                    viewModel.dailyRevenueData.collect { data ->
+                        if (data.isNotEmpty()) {
+                            val entries = data.mapIndexed { index, (_, revenue) ->
+                                BarEntry(index.toFloat(), revenue.toFloat())
+                            }
+                            val labels = data.map { it.first }
+                            val dataSet = BarDataSet(entries, "Выручка").apply {
+                                colors = ColorTemplate.MATERIAL_COLORS.toList()
+                                valueTextSize = 10f
+                            }
+                            binding.barChart.data = BarData(dataSet)
+                            binding.barChart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+                            binding.barChart.xAxis.labelCount = labels.size.coerceAtMost(7)
+                            binding.barChart.invalidate()
                         }
                     }
                 }
@@ -112,56 +159,6 @@ class ReportsFragment : Fragment() {
                     }
                 }
             }
-        }
-    }
-
-    private fun setupPieChart(data: List<Pair<String, Int>>) {
-        val textColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorOnSurface)
-        val entries = data.map { PieEntry(it.second.toFloat(), it.first) }
-        val dataSet = PieDataSet(entries, "Услуги").apply {
-            colors = ColorTemplate.MATERIAL_COLORS.toList()
-            valueTextSize = 14f
-            valueTextColor = textColor
-        }
-        binding.pieChart.apply {
-            this.data = PieData(dataSet)
-            description.isEnabled = false
-            isDrawHoleEnabled = true
-            holeRadius = 40f
-            setHoleColor(android.graphics.Color.TRANSPARENT)
-            setEntryLabelTextSize(12f)
-            setEntryLabelColor(textColor)
-            legend.textColor = textColor
-            animateY(1000)
-            invalidate()
-        }
-    }
-
-    private fun setupBarChart(data: List<Pair<String, Int>>) {
-        val textColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorOnSurface)
-        val entries = data.mapIndexed { index, pair ->
-            BarEntry(index.toFloat(), pair.second.toFloat())
-        }
-        val dataSet = BarDataSet(entries, "Количество заказов").apply {
-            colors = ColorTemplate.MATERIAL_COLORS.toList()
-            valueTextSize = 12f
-            valueTextColor = textColor
-        }
-        binding.barChart.apply {
-            this.data = BarData(dataSet)
-            description.isEnabled = false
-            xAxis.apply {
-                valueFormatter = IndexAxisValueFormatter(data.map { it.first })
-                position = XAxis.XAxisPosition.BOTTOM
-                granularity = 1f
-                setDrawGridLines(false)
-                this.textColor = textColor
-            }
-            axisLeft.textColor = textColor
-            axisRight.isEnabled = false
-            legend.textColor = textColor
-            animateY(1000)
-            invalidate()
         }
     }
 

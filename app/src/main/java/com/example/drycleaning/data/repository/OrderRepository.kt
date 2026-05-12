@@ -8,15 +8,18 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Репозиторий для работы с заказами.
- * CRUD, фильтрация, поиск, аналитика.
- */
+/** Репозиторий для работы с заказами */
 @Singleton
 class OrderRepository @Inject constructor(
     private val orderDao: OrderDao
 ) {
     fun getAllOrders(): Flow<List<Order>> = orderDao.getAllOrders()
+
+    fun getAllOrdersByPrice(): Flow<List<Order>> = orderDao.getAllOrdersByPrice()
+
+    fun getAllOrdersByDueDate(): Flow<List<Order>> = orderDao.getAllOrdersByDueDate()
+
+    fun getAllOrdersByStatus(): Flow<List<Order>> = orderDao.getAllOrdersByStatus()
 
     fun getOrdersByStatus(status: OrderStatus): Flow<List<Order>> = orderDao.getOrdersByStatus(status)
 
@@ -38,7 +41,13 @@ class OrderRepository @Inject constructor(
 
     fun getOrderCountForPeriod(start: Long, end: Long): Flow<Int> = orderDao.getOrderCountForPeriod(start, end)
 
+    fun getAverageCheckForPeriod(start: Long, end: Long): Flow<Double> = orderDao.getAverageCheckForPeriod(start, end)
+
     fun getPopularServices(): Flow<List<ServiceStat>> = orderDao.getPopularServices()
+
+    fun getClientTotalSpent(clientId: Long): Flow<Double> = orderDao.getClientTotalSpent(clientId)
+
+    fun getClientOrderCount(clientId: Long): Flow<Int> = orderDao.getClientOrderCount(clientId)
 
     suspend fun getOrderById(id: Long): Order? = orderDao.getOrderById(id)
 
@@ -51,4 +60,7 @@ class OrderRepository @Inject constructor(
     suspend fun getReadyOrders(): List<Order> = orderDao.getReadyOrders()
 
     suspend fun getOverdueOrders(now: Long): List<Order> = orderDao.getOverdueOrders(now)
+
+    suspend fun getDeliveredOrdersForPeriod(start: Long, end: Long): List<Order> =
+        orderDao.getDeliveredOrdersForPeriod(start, end)
 }

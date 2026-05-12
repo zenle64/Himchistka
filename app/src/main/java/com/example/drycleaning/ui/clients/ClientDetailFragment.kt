@@ -14,13 +14,14 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.drycleaning.databinding.FragmentClientDetailBinding
 import com.example.drycleaning.ui.orders.OrderAdapter
+import com.example.drycleaning.util.toCurrencyString
 import com.example.drycleaning.util.toDateString
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-/** Фрагмент деталей клиента с историей заказов */
+/** Фрагмент деталей клиента с историей заказов и статистикой */
 @AndroidEntryPoint
 class ClientDetailFragment : Fragment() {
 
@@ -82,6 +83,16 @@ class ClientDetailFragment : Fragment() {
                     viewModel.getClientOrders(args.clientId).collect { orders ->
                         orderAdapter.submitList(orders)
                         binding.tvOrdersTitle.text = "История заказов (${orders.size})"
+                    }
+                }
+                launch {
+                    viewModel.getClientTotalSpent(args.clientId).collect { total ->
+                        binding.tvTotalSpent.text = "Потрачено: ${total.toCurrencyString()}"
+                    }
+                }
+                launch {
+                    viewModel.getClientOrderCount(args.clientId).collect { count ->
+                        binding.tvOrderCount.text = "Всего заказов: $count"
                     }
                 }
             }

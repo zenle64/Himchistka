@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.drycleaning.data.entity.Order
 import com.example.drycleaning.data.entity.OrderStatus
+import com.example.drycleaning.data.repository.InventoryRepository
 import com.example.drycleaning.data.repository.OrderRepository
 import com.example.drycleaning.data.repository.ServicePriceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,11 +15,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class SortOption { DATE, PRICE, STATUS, DUE_DATE }
+
 /** ViewModel для управления заказами */
 @HiltViewModel
 class OrdersViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
-    private val servicePriceRepository: ServicePriceRepository
+    private val servicePriceRepository: ServicePriceRepository,
+    private val inventoryRepository: InventoryRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -26,6 +30,9 @@ class OrdersViewModel @Inject constructor(
 
     private val _statusFilter = MutableStateFlow<OrderStatus?>(null)
     val statusFilter: StateFlow<OrderStatus?> = _statusFilter
+
+    private val _sortOption = MutableStateFlow(SortOption.DATE)
+    val sortOption: StateFlow<SortOption> = _sortOption
 
     private val _calculatedPrice = MutableStateFlow(0.0)
     val calculatedPrice: StateFlow<Double> = _calculatedPrice
@@ -40,7 +47,14 @@ class OrdersViewModel @Inject constructor(
                 if (status != null) {
                     orderRepository.getOrdersByStatus(status)
                 } else {
-                    orderRepository.getAllOrders()
+                    _sortOption.flatMapLatest { sort ->
+                        when (sort) {
+                            SortOption.DATE -> orderRepository.getAllOrders()
+                            SortOption.PRICE -> orderRepository.getAllOrdersByPrice()
+                            SortOption.STATUS -> orderRepository.getAllOrdersByStatus()
+                            SortOption.DUE_DATE -> orderRepository.getAllOrdersByDueDate()
+                        }
+                    }
                 }
             }
         } else {
@@ -56,6 +70,10 @@ class OrdersViewModel @Inject constructor(
         _statusFilter.value = status
     }
 
+    fun setSortOption(option: SortOption) {
+        _sortOption.value = option
+    }
+
     fun calculatePrice(itemType: String, serviceType: String) {
         viewModelScope.launch {
             _calculatedPrice.value = servicePriceRepository.calculatePrice(itemType, serviceType)
@@ -66,6 +84,7 @@ class OrdersViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val id = orderRepository.insertOrder(order)
+                autoDeductInventory(order.serviceType)
                 _saveResult.value = Result.success(id)
             } catch (e: Exception) {
                 _saveResult.value = Result.failure(e)
@@ -94,5 +113,21 @@ class OrdersViewModel @Inject constructor(
 
     fun resetSaveResult() {
         _saveResult.value = null
+    }
+
+    private suspend fun autoDeductInventory(serviceType: String) {
+        try {
+            val items = inventoryRepository.getAllItemsList()
+            val detergent = items.firstOrNull { it.name.contains("моющ", ignoreCase = true) || it.name.contains("средств", ignoreCase = true) }
+            if (detergent != null && detergent.quantity > 0) {
+                val amount = when {
+                    serviceType.contains("срочн", ignoreCase = true) -> 1.5
+                    else -> 1.0
+                }
+                if (detergent.quantity >= amount) {
+                    inventoryRepository.deductQuantity(detergent.id, amount)
+                }
+            }
+        } catch (_: Exception) { }
     }
 }

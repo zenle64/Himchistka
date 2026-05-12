@@ -79,6 +79,12 @@ dependencies {
     // MPAndroidChart
     implementation(libs.mpandroidchart)
 
+    // Splash Screen
+    implementation(libs.androidx.splashscreen)
+
+    // SwipeRefreshLayout
+    implementation(libs.androidx.swiperefreshlayout)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
