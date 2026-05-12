@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <!-- Авторизация -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.drycleaning.ui.auth.LoginFragment"
+        android:label="Вход"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_login_to_dashboard"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Dashboard -->
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.example.drycleaning.ui.dashboard.DashboardFragment"
+        android:label="Главная"
+        tools:layout="@layout/fragment_dashboard">
+        <action
+            android:id="@+id/action_dashboard_to_createOrder"
+            app:destination="@id/createOrderFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_clients"
+            app:destination="@id/clientsFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_reports"
+            app:destination="@id/reportsFragment" />
+        <action
+            android:id="@+id/action_dashboard_to_inventory"
+            app:destination="@id/inventoryFragment" />
+    </fragment>
+
+    <!-- Заказы -->
+    <fragment
+        android:id="@+id/ordersFragment"
+        android:name="com.example.drycleaning.ui.orders.OrdersFragment"
+        android:label="Заказы"
+        tools:layout="@layout/fragment_orders">
+        <action
+            android:id="@+id/action_orders_to_orderDetail"
+            app:destination="@id/orderDetailFragment" />
+        <action
+            android:id="@+id/action_orders_to_createOrder"
+            app:destination="@id/createOrderFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/orderDetailFragment"
+        android:name="com.example.drycleaning.ui.orders.OrderDetailFragment"
+        android:label="Детали заказа"
+        tools:layout="@layout/fragment_order_detail">
+        <argument
+            android:name="orderId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_orderDetail_to_createOrder"
+            app:destination="@id/createOrderFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createOrderFragment"
+        android:name="com.example.drycleaning.ui.orders.CreateOrderFragment"
+        android:label="Новый заказ"
+        tools:layout="@layout/fragment_create_order">
+        <argument
+            android:name="orderId"
+            app:argType="long"
+            android:defaultValue="0" />
+    </fragment>
+
+    <!-- Клиенты -->
+    <fragment
+        android:id="@+id/clientsFragment"
+        android:name="com.example.drycleaning.ui.clients.ClientsFragment"
+        android:label="Клиенты"
+        tools:layout="@layout/fragment_clients">
+        <action
+            android:id="@+id/action_clients_to_clientDetail"
+            app:destination="@id/clientDetailFragment" />
+        <action
+            android:id="@+id/action_clients_to_createClient"
+            app:destination="@id/createClientFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/clientDetailFragment"
+        android:name="com.example.drycleaning.ui.clients.ClientDetailFragment"
+        android:label="Детали клиента"
+        tools:layout="@layout/fragment_client_detail">
+        <argument
+            android:name="clientId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_clientDetail_to_createClient"
+            app:destination="@id/createClientFragment" />
+        <action
+            android:id="@+id/action_clientDetail_to_orderDetail"
+            app:destination="@id/orderDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createClientFragment"
+        android:name="com.example.drycleaning.ui.clients.CreateClientFragment"
+        android:label="Новый клиент"
+        tools:layout="@layout/fragment_create_client">
+        <argument
+            android:name="clientId"
+            app:argType="long"
+            android:defaultValue="0" />
+    </fragment>
+
+    <!-- Склад -->
+    <fragment
+        android:id="@+id/inventoryFragment"
+        android:name="com.example.drycleaning.ui.inventory.InventoryFragment"
+        android:label="Склад"
+        tools:layout="@layout/fragment_inventory" />
+
+    <!-- Отчёты -->
+    <fragment
+        android:id="@+id/reportsFragment"
+        android:name="com.example.drycleaning.ui.reports.ReportsFragment"
+        android:label="Отчёты"
+        tools:layout="@layout/fragment_reports" />
+
+    <!-- Настройки -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.drycleaning.ui.settings.SettingsFragment"
+        android:label="Настройки"
+        tools:layout="@layout/fragment_settings">
+        <action
+            android:id="@+id/action_settings_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+</navigation>

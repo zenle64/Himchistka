@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/dashboardFragment"
+        android:icon="@drawable/ic_dashboard"
+        android:title="Главная" />
+
+    <item
+        android:id="@+id/ordersFragment"
+        android:icon="@drawable/ic_orders"
+        android:title="Заказы" />
+
+    <item
+        android:id="@+id/clientsFragment"
+        android:icon="@drawable/ic_clients"
+        android:title="Клиенты" />
+
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_settings"
+        android:title="Настройки" />
+
+</menu>
