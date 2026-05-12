@@ -1,24 +1,15 @@
 package com.example.drycleaning.data.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * Сущность заказа химчистки.
- * Связан с клиентом через внешний ключ.
+ * clientId ссылается на клиента (0 = клиент не привязан).
  */
 @Entity(
     tableName = "orders",
-    foreignKeys = [
-        ForeignKey(
-            entity = Client::class,
-            parentColumns = ["id"],
-            childColumns = ["clientId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [Index("clientId")]
 )
 data class Order(
