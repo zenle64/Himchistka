@@ -1,7 +1,6 @@
 package com.example.drycleaning.ui.reports
 
 import android.app.DatePickerDialog
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +22,7 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.utils.ColorTemplate
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -49,21 +49,10 @@ class ReportsFragment : Fragment() {
     }
 
     private fun setupDatePickers() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.startDate.collect { date ->
-                binding.tvStartDate.text = date.toDateString()
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.endDate.collect { date ->
-                binding.tvEndDate.text = date.toDateString()
-            }
-        }
-
         binding.tvStartDate.setOnClickListener {
             val cal = Calendar.getInstance()
             DatePickerDialog(requireContext(), { _, y, m, d ->
-                val selected = Calendar.getInstance().apply { set(y, m, d) }
+                val selected = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }
                 viewModel.setStartDate(selected.timeInMillis)
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
@@ -71,7 +60,7 @@ class ReportsFragment : Fragment() {
         binding.tvEndDate.setOnClickListener {
             val cal = Calendar.getInstance()
             DatePickerDialog(requireContext(), { _, y, m, d ->
-                val selected = Calendar.getInstance().apply { set(y, m, d) }
+                val selected = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59) }
                 viewModel.setEndDate(selected.timeInMillis)
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
@@ -87,12 +76,22 @@ class ReportsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.getRevenueForPeriod().collect { revenue ->
+                    viewModel.startDate.collect { date ->
+                        binding.tvStartDate.text = date.toDateString()
+                    }
+                }
+                launch {
+                    viewModel.endDate.collect { date ->
+                        binding.tvEndDate.text = date.toDateString()
+                    }
+                }
+                launch {
+                    viewModel.revenueForPeriod.collect { revenue ->
                         binding.tvRevenue.text = revenue.toCurrencyString()
                     }
                 }
                 launch {
-                    viewModel.getOrderCountForPeriod().collect { count ->
+                    viewModel.orderCountForPeriod.collect { count ->
                         binding.tvOrderCount.text = "Заказов: $count"
                     }
                 }
@@ -117,30 +116,36 @@ class ReportsFragment : Fragment() {
     }
 
     private fun setupPieChart(data: List<Pair<String, Int>>) {
+        val textColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorOnSurface)
         val entries = data.map { PieEntry(it.second.toFloat(), it.first) }
         val dataSet = PieDataSet(entries, "Услуги").apply {
             colors = ColorTemplate.MATERIAL_COLORS.toList()
             valueTextSize = 14f
-            valueTextColor = Color.WHITE
+            valueTextColor = textColor
         }
         binding.pieChart.apply {
             this.data = PieData(dataSet)
             description.isEnabled = false
             isDrawHoleEnabled = true
             holeRadius = 40f
+            setHoleColor(android.graphics.Color.TRANSPARENT)
             setEntryLabelTextSize(12f)
+            setEntryLabelColor(textColor)
+            legend.textColor = textColor
             animateY(1000)
             invalidate()
         }
     }
 
     private fun setupBarChart(data: List<Pair<String, Int>>) {
+        val textColor = MaterialColors.getColor(binding.root, com.google.android.material.R.attr.colorOnSurface)
         val entries = data.mapIndexed { index, pair ->
             BarEntry(index.toFloat(), pair.second.toFloat())
         }
         val dataSet = BarDataSet(entries, "Количество заказов").apply {
             colors = ColorTemplate.MATERIAL_COLORS.toList()
             valueTextSize = 12f
+            valueTextColor = textColor
         }
         binding.barChart.apply {
             this.data = BarData(dataSet)
@@ -150,8 +155,11 @@ class ReportsFragment : Fragment() {
                 position = XAxis.XAxisPosition.BOTTOM
                 granularity = 1f
                 setDrawGridLines(false)
+                this.textColor = textColor
             }
+            axisLeft.textColor = textColor
             axisRight.isEnabled = false
+            legend.textColor = textColor
             animateY(1000)
             invalidate()
         }
