@@ -27,16 +27,32 @@
         tools:layout="@layout/fragment_dashboard">
         <action
             android:id="@+id/action_dashboard_to_createOrder"
-            app:destination="@id/createOrderFragment" />
+            app:destination="@id/createOrderFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_dashboard_to_clients"
-            app:destination="@id/clientsFragment" />
+            app:destination="@id/clientsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_dashboard_to_reports"
-            app:destination="@id/reportsFragment" />
+            app:destination="@id/reportsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_dashboard_to_inventory"
-            app:destination="@id/inventoryFragment" />
+            app:destination="@id/inventoryFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <!-- Заказы -->
@@ -47,10 +63,18 @@
         tools:layout="@layout/fragment_orders">
         <action
             android:id="@+id/action_orders_to_orderDetail"
-            app:destination="@id/orderDetailFragment" />
+            app:destination="@id/orderDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_orders_to_createOrder"
-            app:destination="@id/createOrderFragment" />
+            app:destination="@id/createOrderFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -63,7 +87,11 @@
             app:argType="long" />
         <action
             android:id="@+id/action_orderDetail_to_createOrder"
-            app:destination="@id/createOrderFragment" />
+            app:destination="@id/createOrderFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -74,7 +102,7 @@
         <argument
             android:name="orderId"
             app:argType="long"
-            android:defaultValue="0" />
+            android:defaultValue="0L" />
     </fragment>
 
     <!-- Клиенты -->
@@ -85,10 +113,18 @@
         tools:layout="@layout/fragment_clients">
         <action
             android:id="@+id/action_clients_to_clientDetail"
-            app:destination="@id/clientDetailFragment" />
+            app:destination="@id/clientDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_clients_to_createClient"
-            app:destination="@id/createClientFragment" />
+            app:destination="@id/createClientFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -101,10 +137,18 @@
             app:argType="long" />
         <action
             android:id="@+id/action_clientDetail_to_createClient"
-            app:destination="@id/createClientFragment" />
+            app:destination="@id/createClientFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_clientDetail_to_orderDetail"
-            app:destination="@id/orderDetailFragment" />
+            app:destination="@id/orderDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -115,7 +159,7 @@
         <argument
             android:name="clientId"
             app:argType="long"
-            android:defaultValue="0" />
+            android:defaultValue="0L" />
     </fragment>
 
     <!-- Склад -->

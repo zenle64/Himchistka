@@ -27,4 +27,8 @@ class InventoryRepository @Inject constructor(
     suspend fun deleteItem(item: InventoryItem) = inventoryDao.delete(item)
 
     suspend fun deductQuantity(id: Long, amount: Double) = inventoryDao.deductQuantity(id, amount)
+
+    fun searchItems(query: String): Flow<List<InventoryItem>> = inventoryDao.searchItems(query)
+
+    suspend fun getAllItemsList(): List<InventoryItem> = inventoryDao.getAllItemsList()
 }

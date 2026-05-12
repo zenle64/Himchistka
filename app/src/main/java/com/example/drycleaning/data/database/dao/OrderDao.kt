@@ -25,6 +25,15 @@ interface OrderDao {
     @Query("SELECT * FROM orders ORDER BY createdAt DESC")
     fun getAllOrders(): Flow<List<Order>>
 
+    @Query("SELECT * FROM orders ORDER BY price DESC")
+    fun getAllOrdersByPrice(): Flow<List<Order>>
+
+    @Query("SELECT * FROM orders ORDER BY dueDate ASC")
+    fun getAllOrdersByDueDate(): Flow<List<Order>>
+
+    @Query("SELECT * FROM orders ORDER BY status ASC, createdAt DESC")
+    fun getAllOrdersByStatus(): Flow<List<Order>>
+
     @Query("SELECT * FROM orders WHERE id = :id")
     suspend fun getOrderById(id: Long): Order?
 
@@ -64,6 +73,9 @@ interface OrderDao {
     @Query("SELECT COUNT(*) FROM orders WHERE createdAt BETWEEN :start AND :end")
     fun getOrderCountForPeriod(start: Long, end: Long): Flow<Int>
 
+    @Query("SELECT COALESCE(AVG(price), 0) FROM orders WHERE status = 'DELIVERED' AND createdAt BETWEEN :start AND :end")
+    fun getAverageCheckForPeriod(start: Long, end: Long): Flow<Double>
+
     @Query("SELECT serviceType, COUNT(*) as cnt FROM orders GROUP BY serviceType ORDER BY cnt DESC")
     fun getPopularServices(): Flow<List<ServiceStat>>
 
@@ -72,6 +84,15 @@ interface OrderDao {
 
     @Query("SELECT * FROM orders WHERE status != 'DELIVERED' AND status != 'READY' AND dueDate < :now")
     suspend fun getOverdueOrders(now: Long): List<Order>
+
+    @Query("SELECT COALESCE(SUM(price), 0) FROM orders WHERE status = 'DELIVERED' AND clientId = :clientId")
+    fun getClientTotalSpent(clientId: Long): Flow<Double>
+
+    @Query("SELECT COUNT(*) FROM orders WHERE clientId = :clientId")
+    fun getClientOrderCount(clientId: Long): Flow<Int>
+
+    @Query("SELECT * FROM orders WHERE status = 'DELIVERED' AND createdAt BETWEEN :start AND :end ORDER BY createdAt ASC")
+    suspend fun getDeliveredOrdersForPeriod(start: Long, end: Long): List<Order>
 }
 
 /** Результат запроса популярных услуг */

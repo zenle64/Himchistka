@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -40,8 +41,15 @@ class InventoryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
+        setupSearch()
         setupFab()
         observeData()
+    }
+
+    private fun setupSearch() {
+        binding.etSearch.doAfterTextChanged { text ->
+            viewModel.setSearchQuery(text?.toString() ?: "")
+        }
     }
 
     private fun setupRecyclerView() {

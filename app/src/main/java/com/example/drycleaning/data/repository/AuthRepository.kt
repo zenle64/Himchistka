@@ -4,13 +4,11 @@ import com.example.drycleaning.data.database.dao.UserDao
 import com.example.drycleaning.data.datastore.SessionManager
 import com.example.drycleaning.data.entity.User
 import com.example.drycleaning.data.entity.UserRole
+import com.example.drycleaning.util.PasswordUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Репозиторий авторизации.
- * Управляет аутентификацией и сессией пользователя.
- */
+/** Репозиторий авторизации с хешированием паролей */
 @Singleton
 class AuthRepository @Inject constructor(
     private val userDao: UserDao,
@@ -21,7 +19,8 @@ class AuthRepository @Inject constructor(
     val currentUserName = sessionManager.fullName
 
     suspend fun login(username: String, password: String): Result<User> {
-        val user = userDao.authenticate(username, password)
+        val hashedPassword = PasswordUtils.hash(password)
+        val user = userDao.authenticate(username, hashedPassword)
             ?: return Result.failure(Exception("Неверный логин или пароль"))
         sessionManager.saveSession(user.id, user.username, user.fullName, user.role.name)
         return Result.success(user)
@@ -36,7 +35,7 @@ class AuthRepository @Inject constructor(
             userDao.insert(
                 User(
                     username = "admin",
-                    password = "admin123",
+                    password = PasswordUtils.hash("admin123"),
                     fullName = "Администратор",
                     role = UserRole.ADMIN
                 )
@@ -44,11 +43,24 @@ class AuthRepository @Inject constructor(
             userDao.insert(
                 User(
                     username = "manager",
-                    password = "manager123",
+                    password = PasswordUtils.hash("manager123"),
                     fullName = "Менеджер Иванов",
                     role = UserRole.MANAGER
                 )
             )
+        } else {
+            migratePasswordsIfNeeded()
+        }
+    }
+
+    private suspend fun migratePasswordsIfNeeded() {
+        val admin = userDao.findByUsername("admin")
+        if (admin != null && admin.password == "admin123") {
+            userDao.updatePassword(admin.id, PasswordUtils.hash("admin123"))
+        }
+        val manager = userDao.findByUsername("manager")
+        if (manager != null && manager.password == "manager123") {
+            userDao.updatePassword(manager.id, PasswordUtils.hash("manager123"))
         }
     }
 }

@@ -127,6 +127,15 @@
 
                 </LinearLayout>
 
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tvAverageCheck"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Средний чек: 0 ₽"
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -146,11 +155,20 @@
             android:layout_height="250dp"
             android:layout_marginTop="8dp" />
 
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Выручка по дням"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginTop="24dp" />
+
         <com.github.mikephil.charting.charts.BarChart
             android:id="@+id/barChart"
             android:layout_width="match_parent"
             android:layout_height="250dp"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="8dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnExportPdf"
@@ -159,6 +177,23 @@
             android:layout_marginTop="16dp"
             android:text="Экспорт в PDF"
             style="@style/Widget.Material3.Button.TonalButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExportOrdersCsv"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="Экспорт заказов в CSV"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExportClientsCsv"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:text="Экспорт клиентов в CSV"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

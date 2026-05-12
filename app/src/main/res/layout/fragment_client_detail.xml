@@ -103,6 +103,46 @@
 
         </LinearLayout>
 
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Статистика"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tvOrderCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tvTotalSpent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tvOrdersTitle"
             android:layout_width="wrap_content"

@@ -1,5 +1,6 @@
 package com.example.drycleaning.util
 
+import com.example.drycleaning.data.entity.Order
 import com.example.drycleaning.data.entity.OrderStatus
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -54,10 +55,16 @@ fun OrderStatus.toDisplayString(): String = when (this) {
     OrderStatus.DELIVERED -> "Выдан"
 }
 
-/** Получить цвет статуса заказа (Material 3 цвета) */
+/** Получить цвет статуса заказа */
 fun OrderStatus.toColorRes(): Int = when (this) {
     OrderStatus.RECEIVED -> android.R.color.holo_blue_light
     OrderStatus.IN_PROGRESS -> android.R.color.holo_orange_light
     OrderStatus.READY -> android.R.color.holo_green_light
     OrderStatus.DELIVERED -> android.R.color.darker_gray
+}
+
+/** Форматирование номера заказа: ХЧ-2026-0001 */
+fun Order.displayOrderNumber(): String {
+    val year = Calendar.getInstance().apply { timeInMillis = createdAt }.get(Calendar.YEAR)
+    return "ХЧ-$year-${id.toString().padStart(4, '0')}"
 }

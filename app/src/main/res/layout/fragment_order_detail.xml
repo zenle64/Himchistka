@@ -255,5 +255,14 @@
 
         </LinearLayout>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPrintReceipt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Печать квитанции"
+            app:icon="@android:drawable/ic_menu_agenda"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
