@@ -9,9 +9,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.drycleaning.data.repository.OrderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -38,6 +41,16 @@ class ReportsViewModel @Inject constructor(
 
     val popularServices = orderRepository.getPopularServices()
 
+    /** Выручка за выбранный период — реактивно обновляется при смене дат */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val revenueForPeriod = combine(_startDate, _endDate) { start, end -> start to end }
+        .flatMapLatest { (start, end) -> orderRepository.getRevenueForPeriod(start, end) }
+
+    /** Количество заказов за выбранный период — реактивно обновляется при смене дат */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val orderCountForPeriod = combine(_startDate, _endDate) { start, end -> start to end }
+        .flatMapLatest { (start, end) -> orderRepository.getOrderCountForPeriod(start, end) }
+
     fun setStartDate(date: Long) {
         _startDate.value = date
     }
@@ -46,15 +59,11 @@ class ReportsViewModel @Inject constructor(
         _endDate.value = date
     }
 
-    fun getRevenueForPeriod() = orderRepository.getRevenueForPeriod(_startDate.value, _endDate.value)
-
-    fun getOrderCountForPeriod() = orderRepository.getOrderCountForPeriod(_startDate.value, _endDate.value)
-
     fun exportToPdf(context: Context) {
         viewModelScope.launch {
             try {
-                val revenue = orderRepository.getRevenueForPeriod(_startDate.value, _endDate.value).first()
-                val orderCount = orderRepository.getOrderCountForPeriod(_startDate.value, _endDate.value).first()
+                val revenue = revenueForPeriod.first()
+                val orderCount = orderCountForPeriod.first()
                 val services = orderRepository.getPopularServices().first()
 
                 val sdf = SimpleDateFormat("dd.MM.yyyy", Locale("ru"))

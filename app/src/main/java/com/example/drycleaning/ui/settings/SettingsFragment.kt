@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -11,7 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.drycleaning.R
 import com.example.drycleaning.data.entity.ServicePrice
 import com.example.drycleaning.databinding.FragmentSettingsBinding
@@ -20,7 +20,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import android.widget.LinearLayout
 
 /** Фрагмент настроек приложения */
 @AndroidEntryPoint
@@ -29,6 +28,9 @@ class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
     private val viewModel: SettingsViewModel by viewModels()
+
+    /** Флаг для предотвращения зацикливания при программной установке RadioButton */
+    private var isUpdatingThemeUI = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
@@ -45,25 +47,35 @@ class SettingsFragment : Fragment() {
 
     private fun setupThemeSelector() {
         binding.rgTheme.setOnCheckedChangeListener { _, checkedId ->
+            if (isUpdatingThemeUI) return@setOnCheckedChangeListener
+
             val theme = when (checkedId) {
                 R.id.rbLight -> "light"
                 R.id.rbDark -> "dark"
                 else -> "system"
             }
             viewModel.setTheme(theme)
-            when (theme) {
-                "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+
+            val mode = when (theme) {
+                "light" -> AppCompatDelegate.MODE_NIGHT_NO
+                "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+            if (AppCompatDelegate.getDefaultNightMode() != mode) {
+                AppCompatDelegate.setDefaultNightMode(mode)
             }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.theme.collect { theme ->
-                when (theme) {
-                    "light" -> binding.rbLight.isChecked = true
-                    "dark" -> binding.rbDark.isChecked = true
-                    else -> binding.rbSystem.isChecked = true
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.theme.collect { theme ->
+                    isUpdatingThemeUI = true
+                    when (theme) {
+                        "light" -> binding.rbLight.isChecked = true
+                        "dark" -> binding.rbDark.isChecked = true
+                        else -> binding.rbSystem.isChecked = true
+                    }
+                    isUpdatingThemeUI = false
                 }
             }
         }
